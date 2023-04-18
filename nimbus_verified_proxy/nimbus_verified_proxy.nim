@@ -44,25 +44,26 @@ type OnHeaderCallback* = proc (s: cstring) {.cdecl.}
 
 var optimisticHeaderCallback : OnHeaderCallback = nil
 var finalizedHeaderCallback : OnHeaderCallback = nil
-proc setOptimisticHeaderCallback*(cb: OnHeaderCallback) {.exportc.} =
+proc setOptimisticHeaderCallback*(cb: OnHeaderCallback) {.exportc, dynlib.} =
   optimisticHeaderCallback = cb
   echo "optimistic header callback set"
 
-proc setFinalizedHeaderCallback*(cb: OnHeaderCallback) {.exportc.} =
+proc setFinalizedHeaderCallback*(cb: OnHeaderCallback) {.exportc, dynlib.} =
   finalizedHeaderCallback = cb
   echo "finalized header callback set"
 
-
-proc run(config: VerifiedProxyConf) {.raises: [CatchableError, Exception].} =
+proc run(config: VerifiedProxyConf) {.raises: [CatchableError, Exception], gcsafe.} =
   # echo "startLightClient inside nimbus-light-client"
 
   # Required as both Eth2Node and LightClient requires correct config type
   var lcConfig = config.asLightClientConf()
 
-  setupLogging(config.logLevel, config.logStdout, none(OutFile))
+  # setupLogging(config.logLevel, config.logStdout, none(OutFile))
 
   notice "Launching Nimbus verified proxy",
-    version = fullVersionStr, cmdParams = getCLIParams(), config
+    version = fullVersionStr, config
+  # notice "Launching Nimbus verified proxy",
+    # version = fullVersionStr, cmdParams = getCLIParams(), config
 
   let
     metadata = loadEth2Network(config.eth2Network)
@@ -270,10 +271,17 @@ proc run(config: VerifiedProxyConf) {.raises: [CatchableError, Exception].} =
   while true:
     poll()
 
-proc testEcho*() {.exportc.} =
+#proc runAsync(config: VerifiedProxyConf) {.async.} =
+  #try:
+    #run(config)
+  #except Exception as err:
+    #error "err"
+
+
+proc testEcho*() {.exportc, dynlib.} =
   echo "in testEcho"
 
-proc quit*() {.exportc.} = 
+proc quit*() {.exportc, dynlib.} = 
   echo "Quitting"
 
 # template createConfig(clientId: string, ConfType: type, configFilePath: string): untyped =
@@ -313,8 +321,9 @@ proc quit*() {.exportc.} =
 #   config
 
 proc NimMain() {.importc.}
-proc startProxyViaJson*(configJson: cstring) {.exportc.} =
+proc startProxyViaJson*(configJson: cstring) {.exportc, dynlib.} =
   echo "startLcViaJson"
+
   NimMain()
   echo "startLcViaJson 1"
   let str = $configJson
@@ -342,7 +351,18 @@ proc startProxyViaJson*(configJson: cstring) {.exportc.} =
       discv5Enabled: true,
     )
 
-    run(config)
+    proc runInThread(conf: VerifiedProxyConf) {.thread.} =
+      try:
+        run(config)
+      except Exception as err:
+        echo "Exception when running in thread", getCurrentExceptionMsg(), err.getStackTrace() 
+
+    var t: Thread[VerifiedProxyConf]
+    createThread(t, runInThread, config)
+
+    # asyncSpawn runAsync(config)
+    # run(config)
+
   except Exception as err:
     echo "Exception when running ", getCurrentExceptionMsg(), err.getStackTrace() 
 

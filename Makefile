@@ -321,7 +321,7 @@ libverifproxy-objs: | build deps
 libverifproxy: | build deps
 	+ echo -e $(BUILD_MSG) "build/$@" && \
 		$(ENV_SCRIPT) nim --version && \
-		$(ENV_SCRIPT) nim c --app:lib -d:"libp2p_pki_schemes=secp256k1" --opt:size --gc:boehm --header:verifproxy.h --noMain:on --nimcache:nimcache/libverifproxy -o:$(VERIF_PROXY_OUT_PATH)/$@.$(SHAREDLIBEXT) $(NIM_PARAMS) nimbus_verified_proxy/nimbus_verified_proxy.nim
+		$(ENV_SCRIPT) nim c --app:lib -d:nimDebugDlOpen -d:"libp2p_pki_schemes=secp256k1" --header:verifproxy.h --noMain:on --nimcache:nimcache/libverifproxy -o:$(VERIF_PROXY_OUT_PATH)/$@.$(SHAREDLIBEXT) $(NIM_PARAMS) nimbus_verified_proxy/nimbus_verified_proxy.nim
 	cp nimcache/libverifproxy/verifproxy.h $(VERIF_PROXY_OUT_PATH)/
 	cp vendor/nimbus-build-system/vendor/Nim-csources-v1/c_code/nimbase.h $(VERIF_PROXY_OUT_PATH)/
 	echo -e $(BUILD_END_MSG) "build/$@"
