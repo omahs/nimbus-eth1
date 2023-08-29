@@ -1113,10 +1113,11 @@ proc getNClosestNodesWithRadius*(
 
 proc neighborhoodGossip*(
     p: PortalProtocol,
+    nodeId: NodeId,
     contentKeys: ContentKeysList,
     content: seq[seq[byte]]): Future[int] {.async.} =
   ## Returns number of peers to which content was gossiped
-
+  
   if content.len() == 0:
     return 0
 
@@ -1155,7 +1156,8 @@ proc neighborhoodGossip*(
     let radius = p.radiusCache.get(node.id)
     if radius.isSome():
       if p.inRange(node.id, radius.unsafeGet(), contentId):
-        gossipNodes.add(node)
+        if node.id != nodeId:
+          gossipNodes.add(node)
 
   if gossipNodes.len >= 8: # use local nodes for gossip
     portal_gossip_without_lookup.inc(labelValues = [$p.protocolId])

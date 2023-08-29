@@ -60,7 +60,7 @@ proc propagateEpochAccumulator*(
       encodedAccumulator
     )
     discard await p.neighborhoodGossip(
-      ContentKeysList(@[encKey]), @[encodedAccumulator])
+      ContentKeysList(nodeId, @[encKey]), @[encodedAccumulator])
 
     return ok()
 
@@ -94,7 +94,7 @@ proc historyPropagate*(
     while true:
       let (keys, content) = await gossipQueue.popFirst()
 
-      discard await p.neighborhoodGossip(keys, @[content])
+      discard await p.neighborhoodGossip(nodeId, keys, @[content])
 
   for i in 0 ..< concurrentGossips:
     gossipWorkers.add(gossipWorker(p))
@@ -152,7 +152,7 @@ proc historyPropagateBlock*(
         contentId = history_content.toContentId(encKey)
       p.storeContent(encKey, contentId, value[1])
 
-      discard await p.neighborhoodGossip(ContentKeysList(@[encode(value[0])]), @[value[1]])
+      discard await p.neighborhoodGossip(nodeId, ContentKeysList(@[encode(value[0])]), @[value[1]])
 
     return ok()
   else:
@@ -190,7 +190,7 @@ proc historyPropagateHeadersWithProof*(
       p.storeContent(encKey, contentId, encodedContent)
 
       let keys = ContentKeysList(@[encode(contentKey)])
-      discard await p.neighborhoodGossip(keys, @[encodedContent])
+      discard await p.neighborhoodGossip(nodeId, keys, @[encodedContent])
 
   return ok()
 
@@ -229,7 +229,7 @@ proc historyPropagateHeaders*(
     while true:
       let (keys, content) = await gossipQueue.popFirst()
 
-      discard await p.neighborhoodGossip(keys, @[content])
+      discard await p.neighborhoodGossip(nodeId, keys, @[content])
 
   for i in 0 ..< concurrentGossips:
     gossipWorkers.add(gossipWorker(p))

@@ -153,9 +153,9 @@ proc breadthContentPropagate*(
 
   proc gossipWorker(p: PortalProtocol) {.async.} =
     while true:
-      let (keys, content) = await gossipQueue.popFirst()
+      let (nodeId, keys, content) = await gossipQueue.popFirst()
 
-      discard await p.neighborhoodGossip(keys, content)
+      discard await p.neighborhoodGossip(nodeId, keys, content)
 
   for i in 0 ..< concurrentGossips:
     gossipWorkers.add(gossipWorker(p))
