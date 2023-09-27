@@ -233,6 +233,19 @@ type
       defaultValueDesc: $defaultDisablePoke
       name: "disable-poke" .}: bool
 
+    timeoutExpiration* {.
+      hidden
+      desc: "I have no idea how to describe this parameter"
+      defaultValue: defaultTimeoutExpiration
+      defaultValueDesc: $defaultTimeoutExpiration
+      name: "timeout-expiration" .}: uint32
+
+    timeoutInterval* {.
+      desc: "Minimal interval between pings"
+      defaultValue: defaultTimeoutInterval
+      defaultValueDesc: $defaultTimeoutInterval
+      name: "timeout-interval" .}: uint32
+
     case cmd* {.
       command
       defaultValue: noCommand .}: PortalCmd
