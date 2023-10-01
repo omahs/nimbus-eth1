@@ -11,7 +11,7 @@
 {.push raises: [].}
 
 import
-  std/[sequtils, sets, algorithm, tables, asyncdispatch, times, math],
+  std/[sequtils, sets, algorithm, tables, math],
   stew/[results, byteutils, leb128, endians2], chronicles, chronos, nimcrypto/hash,
   bearssl, ssz_serialization, metrics, faststreams,
   eth/rlp, eth/p2p/discoveryv5/[protocol, node, enr, routing_table, random2,
@@ -172,7 +172,7 @@ type
     offerWorkers: seq[Future[void]]
     disablePoke: bool
     pingTimings: Table[NodeId, uint64]
-    timeoutExpiration: uint64
+    timeoutInterval: uint64
 
   PortalResult*[T] = Result[T, string]
 
@@ -195,23 +195,6 @@ type
     # List of nodes which do not have requested content, and for which
     # content is in their range
     nodesInterestedInContent*: seq[Node]
-
-proc gcOldTimestamps(p: PortalProtocol) {.async.} = 
-  # TODO Better way to do this would be also track total memory and memory consumption
-  # and/or track memory consumtion grow rate and if we start to consume too much memory
-  # or if the grow rate is too fast then we have to drop old timings starting from
-  # oldest ones
-  while true:
-    let nowMilliSeconds = uint64(epochTime() * 1000)
-    for nodeId, timeout in p.pingTimings:
-      # NOTE not sure how to go about this cause uint64 - uint64 still uint64
-      # so in case where clocks moved backwards (think NTP correction) there might be a case
-      # where this works incorrectly
-      if nowMilliSeconds - timeout > p.timeoutExpiration:
-        p.pingTimings.del(nodeId)
-    # TODO this value should probably be adaptive, relative to the size
-    # of the routinng table
-    await sleepAsync(1000)
 
 proc init*(
   T: type ContentKV,
@@ -497,15 +480,11 @@ proc new*(T: type PortalProtocol,
     offerQueue: newAsyncQueue[OfferRequest](concurrentOffers),
     disablePoke: config.disablePoke,
     pingTimings: initTable[NodeId, uint64](),
-    timeoutExpiration: config.timeoutExpiration,
-    timeoutInterval: config.timeoutInterval
+    timeoutInterval: 30_000 # 30 seconds
     )
 
   proto.baseProtocol.registerTalkProtocol(@(proto.protocolId), proto).expect(
     "Only one protocol should have this id")
-
-  # start updating ping timings
-  asyncCheck gcOldTimestamps(proto)
 
   proto
 
@@ -592,14 +571,6 @@ proc recordsFromBytes*(rawRecords: List[ByteList, 32]): PortalResult[seq[Record]
 
 proc ping*(p: PortalProtocol, dst: Node):
     Future[PortalResult[PongMessage]] {.async.} =
-
-  let nowMilliSeconds = uint64(epochTime() * 1000) # milliseconds
-
-  if p.pingTimings.hasKey(dst):
-    if p.pingTimings[dst] + p.timeoutInterval > nowMilliSeconds # short-circuit this ping if not enougth time passed since last ping for this node
-      return err("Ping cooldown") # Is there a better way to short-circuit that?
-    
-  p.pingTimings[dst] = nowMilliSeconds
 
   let pongResponse = await p.pingImpl(dst)
 

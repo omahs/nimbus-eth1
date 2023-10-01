@@ -33,8 +33,6 @@ const
   defaultRadiusConfig* = RadiusConfig(kind: Dynamic)
   defaultRadiusConfigDesc* = $defaultRadiusConfig.kind
   defaultDisablePoke* = false
-  defaultTimeoutExpiration* = 60 * 60 * 24 * 1000 # One day
-  defaultTimeoutInterval = 1 * 1000 # 1 sec
 
   defaultPortalProtocolConfig* = PortalProtocolConfig(
     tableIpLimits: DefaultTableIpLimits,
