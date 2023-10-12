@@ -19,7 +19,8 @@ import
   ../../seed_db,
   "."/[portal_stream, portal_protocol_config],
   ../state/state_distance,
-  ./messages
+  ./messages,
+  sugar
 
 export messages, routing_table, protocol
 
@@ -242,10 +243,10 @@ func `$`(id: PortalProtocolId): string =
   id.toHex()
 
 proc getIp(address: Option[Address]): string =
-  address.map(proc (a:Address):string = $a.ip).get("0.0.0.0")
+  address.map((a) => $a.ip).get("0.0.0.0")
 
 proc getPort(address: Option[Address]): string =
-  address.map(proc (a:Address):string  = $a.port).get("0")
+  address.map((a) => $a.port).get("0")
 
 proc addNode*(p: PortalProtocol, node: Node): NodeStatus =
   p.routingTable.addNode(node)
@@ -1123,7 +1124,7 @@ proc traceContentLookup*(p: PortalProtocol, target: ByteList, targetId: UInt256)
   metadata["0x" & $p.localNode.id] = NodeMetadata(
     enr: p.localNode.record,
     ip: getIp(p.localNode.address),
-    port: getPort(p.localNode.address),
+    port: p.localNode.address.map((a) => $a.port).get("0"),
     distance: p.routingTable.distance(p.localNode.id, targetId)
   )
 
@@ -1131,7 +1132,7 @@ proc traceContentLookup*(p: PortalProtocol, target: ByteList, targetId: UInt256)
     metadata["0x" & $cn.id] = NodeMetadata(
       enr: cn.record,
       ip: getIp(cn.address),
-      port: getPort(cn.address),
+      port: cn.address.map((a) => $a.port).get("0"),
       distance: p.routingTable.distance(cn.id, targetId)
     )
 
