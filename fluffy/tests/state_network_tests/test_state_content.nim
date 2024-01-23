@@ -25,10 +25,10 @@ suite "State Content Keys":
     check encoded.toHex() == evenNibles
     # echo ">>>", encoded.toHex()
       
-  const oddNibbles = "0105000000123456789abc0d"
+  const oddNibbles = "01050000000123456789abcd"
   test "Encode/decode odd nibbles":
     const
-      packedNibbles = Nibbles.packedNibbles.init(@[NibblePair 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0x0D])
+      packedNibbles = Nibbles.packedNibbles.init(@[NibblePair 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD])
       isOddLength = true
 
     let
