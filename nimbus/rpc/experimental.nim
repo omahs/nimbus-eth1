@@ -11,18 +11,22 @@
 
 import
   std/[typetraits],
-  json_rpc/rpcserver, stint, web3/conversions,
+  json_rpc/rpcserver,
+  web3/conversions,
   eth/p2p,
-  ../[transaction, vm_state, constants, vm_types],
-  ../db/state_db,
-  rpc_types, rpc_utils,
-  ../common/common,
-  ../utils/utils,
-  ../beacon/web3_eth_conv,
-  ./filters,
+  stint,
   ../core/executor/process_block,
-  ../db/ledger,
+  ../[transaction, constants],
+  ../beacon/web3_eth_conv,
   ../stateless/multi_keys,
+  ../evm/[state, types],
+  ../common/common,
+  ../db/state_db,
+  ../utils/utils,
+  ../db/ledger,
+  ./rpc_types,
+  ./rpc_utils,
+  ./filters,
   ./p2p
 
 type
